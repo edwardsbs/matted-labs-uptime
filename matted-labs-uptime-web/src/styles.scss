@@ -1,0 +1,33 @@
+@use '@angular/material' as mat;
+
+html {
+  height: 100%;
+  @include mat.theme(
+    (
+      color: (
+        primary: mat.$violet-palette,
+        tertiary: mat.$cyan-palette,
+        theme-type: dark,
+      ),
+      typography: Roboto,
+      density: 0,
+    )
+  );
+}
+
+body {
+  color-scheme: dark;
+  background-color: #0d0d1a;
+  color: #e0e0e0;
+  font: var(--mat-sys-body-medium);
+  margin: 0;
+  height: 100%;
+}
+
+* { box-sizing: border-box; }
+
+a { text-decoration: none; }
+
+.mat-mdc-card {
+  background: #1e1e2e !important;
+}

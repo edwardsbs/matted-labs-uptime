@@ -1,0 +1,79 @@
+<div class="dashboard-container">
+  <!-- Global banner -->
+  <div class="status-banner" [class.banner-up]="allUp" [class.banner-down]="!allUp && !loading">
+    @if (loading) {
+      <mat-spinner diameter="20"></mat-spinner>
+      <span>Loading...</span>
+    } @else if (allUp) {
+      <mat-icon>check_circle</mat-icon>
+      <span>All systems operational</span>
+    } @else {
+      <mat-icon>error</mat-icon>
+      <span>{{ downCount }} service{{ downCount !== 1 ? 's' : '' }} down</span>
+    }
+  </div>
+
+  <div class="grid">
+    @for (status of statuses; track status.service.id) {
+      <mat-card class="service-card" [class.card-down]="status.latestCheck && !status.latestCheck.isUp">
+        <mat-card-header>
+          <div class="card-title-row">
+            <div class="status-dot" [class.dot-up]="status.latestCheck?.isUp" [class.dot-down]="status.latestCheck && !status.latestCheck.isUp"></div>
+            <span class="service-name">{{ status.service.name }}</span>
+          </div>
+          <div class="status-label" [class.label-up]="status.latestCheck?.isUp" [class.label-down]="status.latestCheck && !status.latestCheck.isUp">
+            {{ status.latestCheck ? (status.latestCheck.isUp ? 'UP' : 'DOWN') : 'NO DATA' }}
+          </div>
+        </mat-card-header>
+
+        <mat-card-content>
+          <div class="url">{{ status.service.url }}</div>
+
+          @if (status.latestCheck) {
+            <div class="metrics">
+              <span class="metric">
+                <mat-icon class="metric-icon">speed</mat-icon>
+                {{ status.latestCheck.responseTimeMs }}ms
+              </span>
+              <span class="metric">
+                <mat-icon class="metric-icon">schedule</mat-icon>
+                {{ formatAgo(status.latestCheck.checkedAt) }}
+              </span>
+            </div>
+          }
+
+          <!-- Sparkline -->
+          <div class="sparkline">
+            @for (check of status.recentChecks.slice().reverse(); track check.id) {
+              <div
+                class="spark-block"
+                [style.background-color]="sparkColor(check)"
+                [matTooltip]="formatTime(check.checkedAt) + ' — ' + (check.isUp ? 'UP ' + check.responseTimeMs + 'ms' : 'DOWN')"
+              ></div>
+            }
+          </div>
+
+          <div class="uptime-row">
+            <span class="uptime-stat">
+              <span class="uptime-label">24h</span>
+              <span class="uptime-val">{{ status.uptime24h }}%</span>
+            </span>
+            <span class="uptime-stat">
+              <span class="uptime-label">7d</span>
+              <span class="uptime-val">{{ status.uptime7d }}%</span>
+            </span>
+            <span class="uptime-stat">
+              <span class="uptime-label">30d</span>
+              <span class="uptime-val">{{ status.uptime30d }}%</span>
+            </span>
+          </div>
+        </mat-card-content>
+
+        <mat-card-actions>
+          <a mat-button [routerLink]="['/history', status.service.id]">History</a>
+          <a mat-button [routerLink]="['/settings']">Edit</a>
+        </mat-card-actions>
+      </mat-card>
+    }
+  </div>
+</div>

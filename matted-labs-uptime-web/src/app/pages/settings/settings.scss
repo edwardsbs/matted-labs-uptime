@@ -1,0 +1,92 @@
+.settings-container {
+  padding: 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+  h1 { margin: 0; font-size: 22px; }
+}
+
+.edit-form {
+  margin-bottom: 24px;
+  background: #1e1e2e;
+}
+
+.form-grid {
+  display: grid;
+  gap: 16px;
+  padding-top: 8px;
+}
+
+.toggles {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+
+.centered {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+
+.services-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.service-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: #1e1e2e;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+}
+
+.service-info { flex: 1; }
+
+.service-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.service-url {
+  font-size: 12px;
+  color: #777;
+  margin-top: 2px;
+}
+
+.service-meta {
+  font-size: 12px;
+  color: #555;
+  margin-top: 4px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.inactive-badge, .ssl-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.inactive-badge {
+  background: rgba(255,152,0,0.15);
+  color: #ffa726;
+}
+
+.ssl-badge {
+  background: rgba(33,150,243,0.15);
+  color: #64b5f6;
+}
+
+.service-actions { display: flex; gap: 4px; }

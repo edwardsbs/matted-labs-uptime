@@ -1,0 +1,6 @@
+@matted_labs_uptime_api_HostAddress = http://localhost:5080
+
+GET {{matted_labs_uptime_api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,76 @@
+<div class="settings-container">
+  <div class="page-header">
+    <a mat-icon-button routerLink="/">
+      <mat-icon>arrow_back</mat-icon>
+    </a>
+    <h1>Settings</h1>
+    <button mat-raised-button color="primary" (click)="startAdd()" style="margin-left:auto">
+      <mat-icon>add</mat-icon>
+      Add Service
+    </button>
+  </div>
+
+  <!-- Add / Edit form -->
+  @if (editingId !== null) {
+    <mat-card class="edit-form">
+      <mat-card-header>
+        <mat-card-title>{{ editingId === -1 ? 'Add Service' : 'Edit Service' }}</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Name</mat-label>
+            <input matInput [(ngModel)]="form.name" name="name" required />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>URL</mat-label>
+            <input matInput [(ngModel)]="form.url" name="url" required />
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Check Interval (minutes)</mat-label>
+            <input matInput type="number" [(ngModel)]="form.intervalMinutes" name="interval" min="1" required />
+          </mat-form-field>
+
+          <div class="toggles">
+            <mat-slide-toggle [(ngModel)]="form.isActive" name="active">Active</mat-slide-toggle>
+            <mat-slide-toggle [(ngModel)]="form.ignoreSslErrors" name="ssl">Ignore SSL errors</mat-slide-toggle>
+          </div>
+        </div>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" (click)="save()">Save</button>
+        <button mat-button (click)="cancel()">Cancel</button>
+      </mat-card-actions>
+    </mat-card>
+  }
+
+  @if (loading) {
+    <div class="centered"><mat-spinner></mat-spinner></div>
+  } @else {
+    <div class="services-list">
+      @for (s of services; track s.id) {
+        <mat-card class="service-row">
+          <div class="service-info">
+            <div class="service-name">{{ s.name }}</div>
+            <div class="service-url">{{ s.url }}</div>
+            <div class="service-meta">
+              Every {{ s.intervalMinutes }}min
+              @if (!s.isActive) { <span class="inactive-badge">Inactive</span> }
+              @if (s.ignoreSslErrors) { <span class="ssl-badge">Ignore SSL</span> }
+            </div>
+          </div>
+          <div class="service-actions">
+            <button mat-icon-button (click)="startEdit(s)" matTooltip="Edit">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="delete(s.id)" matTooltip="Delete">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

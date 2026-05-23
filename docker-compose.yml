@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: matted-uptime-mssql
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: ${SA_PASSWORD}
+      MSSQL_PID: Express
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      - uptime-net
+      - shared-net
+
+  api:
+    build:
+      context: ./matted-labs-uptime-api
+      dockerfile: Dockerfile
+    container_name: matted-uptime-api
+    restart: unless-stopped
+    depends_on:
+      - mssql
+    environment:
+      ConnectionStrings__Default: ${CONNECTION_STRING}
+      Smtp__Host: ${SMTP_HOST}
+      Smtp__Port: ${SMTP_PORT}
+      Smtp__User: ${SMTP_USER}
+      Smtp__Password: ${SMTP_PASSWORD}
+      Smtp__From: ${SMTP_FROM}
+      Smtp__To: ${SMTP_TO}
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_URLS: http://+:8080
+    ports:
+      - "5100:8080"
+    networks:
+      - uptime-net
+      - shared-net
+
+  web:
+    build:
+      context: ./matted-labs-uptime-web
+      dockerfile: Dockerfile
+    container_name: matted-uptime-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "4100:80"
+    networks:
+      - uptime-net
+
+volumes:
+  mssql_data:
+
+networks:
+  uptime-net:
+    driver: bridge
+  shared-net:
+    external: true
+    name: shared-net

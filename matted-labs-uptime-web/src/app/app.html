@@ -1,0 +1,15 @@
+<mat-toolbar class="app-toolbar">
+  <a routerLink="/" class="brand">
+    <mat-icon>monitor_heart</mat-icon>
+    Matted Labs Uptime
+  </a>
+  <span class="spacer"></span>
+  <a mat-button routerLink="/">Dashboard</a>
+  <a mat-button routerLink="/settings">
+    <mat-icon>settings</mat-icon>
+  </a>
+</mat-toolbar>
+
+<main>
+  <router-outlet></router-outlet>
+</main>
