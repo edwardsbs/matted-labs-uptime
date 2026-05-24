@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using MattedLabsUptime.Api.Models;
 
 namespace MattedLabsUptime.Api.Data;
@@ -28,5 +29,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
              .HasForeignKey(x => x.MonitoredServiceId)
              .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // EF Core reads datetime2 from SQL Server as Unspecified kind — force UTC so
+        // System.Text.Json serializes with a Z suffix and Angular converts correctly.
+        var utcConverter = new ValueConverter<DateTime, DateTime>(
+            v => v,
+            v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            foreach (var property in entityType.GetProperties())
+                if (property.ClrType == typeof(DateTime))
+                    property.SetValueConverter(utcConverter);
     }
 }

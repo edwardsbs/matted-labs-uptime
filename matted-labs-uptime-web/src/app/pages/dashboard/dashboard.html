@@ -71,7 +71,7 @@
 
         <mat-card-actions>
           <a mat-button [routerLink]="['/history', status.service.id]">History</a>
-          <a mat-button [routerLink]="['/settings']">Edit</a>
+          <button mat-button (click)="openEdit(status.service)">Edit</button>
         </mat-card-actions>
       </mat-card>
     }

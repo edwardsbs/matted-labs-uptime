@@ -7,9 +7,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { interval, Subscription, startWith, switchMap } from 'rxjs';
 import { UptimeService } from '../../core/uptime.service';
-import { ServiceStatus, UptimeCheck } from '../../core/models';
+import { MonitoredService, ServiceStatus, UptimeCheck } from '../../core/models';
+import { ServiceEditDialogComponent } from '../../components/service-edit-dialog';
 
 @Component({
   selector: 'app-dashboard',
@@ -24,6 +26,7 @@ import { ServiceStatus, UptimeCheck } from '../../core/models';
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   private uptimeSvc = inject(UptimeService);
+  private dialog = inject(MatDialog);
 
   statuses = signal<ServiceStatus[]>([]);
   loading = signal(true);
@@ -39,11 +42,22 @@ export class DashboardComponent implements OnInit, OnDestroy {
       switchMap(() => this.uptimeSvc.getDashboard())
     ).subscribe({
       next: data => { this.statuses.set(data); this.loading.set(false); },
-      error: () => { this.loading.set(false); }
+      error: () => this.loading.set(false)
     });
   }
 
   ngOnDestroy() { this.sub?.unsubscribe(); }
+
+  openEdit(service: MonitoredService) {
+    const ref = this.dialog.open(ServiceEditDialogComponent, {
+      data: service,
+      width: '560px',
+      panelClass: 'dark-dialog'
+    });
+    ref.afterClosed().subscribe(saved => {
+      if (saved) this.uptimeSvc.getDashboard().subscribe(data => this.statuses.set(data));
+    });
+  }
 
   sparkColor(c: UptimeCheck) { return c.isUp ? '#4caf50' : '#f44336'; }
 

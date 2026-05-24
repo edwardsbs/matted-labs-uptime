@@ -1,0 +1,53 @@
+<h2 mat-dialog-title>Edit — {{ service.name }}</h2>
+
+<mat-dialog-content>
+  <div class="form-grid">
+    <mat-form-field appearance="outline">
+      <mat-label>Name</mat-label>
+      <input matInput [value]="form().name" (input)="updateForm({ name: $any($event.target).value })" />
+    </mat-form-field>
+
+    <div class="url-row">
+      <mat-form-field appearance="outline" class="url-field">
+        <mat-label>URL</mat-label>
+        <input matInput [value]="form().url" (input)="updateForm({ url: $any($event.target).value })" />
+      </mat-form-field>
+      <button mat-stroked-button type="button" (click)="testUrl()" [disabled]="testing() || !form().url" class="test-btn">
+        @if (testing()) {
+          <mat-spinner diameter="18"></mat-spinner>
+        } @else {
+          <mat-icon>wifi_tethering</mat-icon>
+        }
+        Test
+      </button>
+    </div>
+
+    @if (testResult(); as r) {
+      <div class="test-result" [class.result-up]="r.isUp" [class.result-down]="!r.isUp">
+        <mat-icon>{{ r.isUp ? 'check_circle' : 'cancel' }}</mat-icon>
+        <span class="result-status">{{ r.isUp ? 'UP' : 'DOWN' }}</span>
+        <span class="result-time">{{ r.responseTimeMs }}ms</span>
+        @if (r.statusCode) { <span>HTTP {{ r.statusCode }}</span> }
+        @if (r.errorMessage) { <span class="result-error">{{ r.errorMessage }}</span> }
+      </div>
+    }
+
+    <mat-form-field appearance="outline">
+      <mat-label>Check Interval (minutes)</mat-label>
+      <input matInput type="number" [value]="form().intervalMinutes" (input)="updateForm({ intervalMinutes: +$any($event.target).value })" min="1" />
+    </mat-form-field>
+
+    <div class="toggles">
+      <mat-slide-toggle [checked]="form().isActive" (change)="updateForm({ isActive: $event.checked })">Active</mat-slide-toggle>
+      <mat-slide-toggle [checked]="form().ignoreSslErrors" (change)="updateForm({ ignoreSslErrors: $event.checked })">Ignore SSL errors</mat-slide-toggle>
+    </div>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()">Cancel</button>
+  <button mat-raised-button color="primary" (click)="save()" [disabled]="saving()">
+    @if (saving()) { <mat-spinner diameter="18"></mat-spinner> }
+    Save
+  </button>
+</mat-dialog-actions>
