@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -24,8 +24,13 @@ import { ServiceStatus, UptimeCheck } from '../../core/models';
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   private uptimeSvc = inject(UptimeService);
-  statuses: ServiceStatus[] = [];
-  loading = true;
+
+  statuses = signal<ServiceStatus[]>([]);
+  loading = signal(true);
+
+  downCount = computed(() => this.statuses().filter(s => s.latestCheck && !s.latestCheck.isUp).length);
+  allUp = computed(() => this.downCount() === 0 && this.statuses().length > 0);
+
   private sub?: Subscription;
 
   ngOnInit() {
@@ -33,26 +38,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
       startWith(0),
       switchMap(() => this.uptimeSvc.getDashboard())
     ).subscribe({
-      next: data => { this.statuses = data; this.loading = false; },
-      error: () => { this.loading = false; }
+      next: data => { this.statuses.set(data); this.loading.set(false); },
+      error: () => { this.loading.set(false); }
     });
   }
 
   ngOnDestroy() { this.sub?.unsubscribe(); }
 
-  get downCount() { return this.statuses.filter(s => s.latestCheck && !s.latestCheck.isUp).length; }
-  get allUp() { return this.downCount === 0 && this.statuses.length > 0; }
-
   sparkColor(c: UptimeCheck) { return c.isUp ? '#4caf50' : '#f44336'; }
 
   formatTime(iso: string) {
-    const d = new Date(iso);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   formatAgo(iso: string) {
-    const diff = Date.now() - new Date(iso).getTime();
-    const m = Math.floor(diff / 60000);
+    const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000);
     if (m < 1) return 'just now';
     if (m < 60) return `${m}m ago`;
     return `${Math.floor(m / 60)}h ago`;

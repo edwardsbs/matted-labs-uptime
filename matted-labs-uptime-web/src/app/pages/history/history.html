@@ -4,8 +4,8 @@
       <mat-icon>arrow_back</mat-icon>
     </a>
     <div>
-      <h1>{{ service?.name ?? 'History' }}</h1>
-      <div class="url">{{ service?.url }}</div>
+      <h1>{{ service()?.name ?? 'History' }}</h1>
+      <div class="url">{{ service()?.url }}</div>
     </div>
     <button mat-stroked-button (click)="checkNow()" style="margin-left: auto">
       <mat-icon>refresh</mat-icon>
@@ -13,12 +13,12 @@
     </button>
   </div>
 
-  @if (loading) {
+  @if (loading()) {
     <div class="centered"><mat-spinner></mat-spinner></div>
   } @else {
     <mat-card>
       <mat-card-content>
-        <table mat-table [dataSource]="checks" class="history-table">
+        <table mat-table [dataSource]="checks()" class="history-table">
           <ng-container matColumnDef="status">
             <th mat-header-cell *matHeaderCellDef>Status</th>
             <td mat-cell *matCellDef="let row">

@@ -23,6 +23,55 @@
   padding-top: 8px;
 }
 
+.url-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.url-field { flex: 1; }
+
+.test-btn {
+  margin-top: 4px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.test-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-top: -8px;
+  margin-bottom: 4px;
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+  &.result-up {
+    background: rgba(76,175,80,0.12);
+    border: 1px solid rgba(76,175,80,0.3);
+    color: #81c784;
+    mat-icon { color: #81c784; }
+  }
+
+  &.result-down {
+    background: rgba(244,67,54,0.12);
+    border: 1px solid rgba(244,67,54,0.3);
+    color: #e57373;
+    mat-icon { color: #e57373; }
+  }
+}
+
+.result-status { font-weight: 700; letter-spacing: 0.5px; }
+.result-time { color: #aaa; }
+.result-code { color: #aaa; }
+.result-error { font-size: 12px; opacity: 0.8; word-break: break-word; }
+
 .toggles {
   display: flex;
   gap: 24px;

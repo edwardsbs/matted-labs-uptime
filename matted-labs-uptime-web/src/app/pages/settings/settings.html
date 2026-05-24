@@ -10,32 +10,51 @@
     </button>
   </div>
 
-  <!-- Add / Edit form -->
-  @if (editingId !== null) {
+  @if (editingId() !== null) {
     <mat-card class="edit-form">
       <mat-card-header>
-        <mat-card-title>{{ editingId === -1 ? 'Add Service' : 'Edit Service' }}</mat-card-title>
+        <mat-card-title>{{ editingId() === -1 ? 'Add Service' : 'Edit Service' }}</mat-card-title>
       </mat-card-header>
       <mat-card-content>
         <div class="form-grid">
           <mat-form-field appearance="outline">
             <mat-label>Name</mat-label>
-            <input matInput [(ngModel)]="form.name" name="name" required />
+            <input matInput [value]="form().name" (input)="updateForm({ name: $any($event.target).value })" />
           </mat-form-field>
 
-          <mat-form-field appearance="outline">
-            <mat-label>URL</mat-label>
-            <input matInput [(ngModel)]="form.url" name="url" required />
-          </mat-form-field>
+          <div class="url-row">
+            <mat-form-field appearance="outline" class="url-field">
+              <mat-label>URL</mat-label>
+              <input matInput [value]="form().url" (input)="updateForm({ url: $any($event.target).value })" />
+            </mat-form-field>
+            <button mat-stroked-button type="button" (click)="testUrl()" [disabled]="testing() || !form().url" class="test-btn">
+              @if (testing()) {
+                <mat-spinner diameter="18"></mat-spinner>
+              } @else {
+                <mat-icon>wifi_tethering</mat-icon>
+              }
+              Test
+            </button>
+          </div>
+
+          @if (testResult(); as r) {
+            <div class="test-result" [class.result-up]="r.isUp" [class.result-down]="!r.isUp">
+              <mat-icon>{{ r.isUp ? 'check_circle' : 'cancel' }}</mat-icon>
+              <span class="result-status">{{ r.isUp ? 'UP' : 'DOWN' }}</span>
+              <span class="result-time">{{ r.responseTimeMs }}ms</span>
+              @if (r.statusCode) { <span class="result-code">HTTP {{ r.statusCode }}</span> }
+              @if (r.errorMessage) { <span class="result-error">{{ r.errorMessage }}</span> }
+            </div>
+          }
 
           <mat-form-field appearance="outline">
             <mat-label>Check Interval (minutes)</mat-label>
-            <input matInput type="number" [(ngModel)]="form.intervalMinutes" name="interval" min="1" required />
+            <input matInput type="number" [value]="form().intervalMinutes" (input)="updateForm({ intervalMinutes: +$any($event.target).value })" min="1" />
           </mat-form-field>
 
           <div class="toggles">
-            <mat-slide-toggle [(ngModel)]="form.isActive" name="active">Active</mat-slide-toggle>
-            <mat-slide-toggle [(ngModel)]="form.ignoreSslErrors" name="ssl">Ignore SSL errors</mat-slide-toggle>
+            <mat-slide-toggle [checked]="form().isActive" (change)="updateForm({ isActive: $event.checked })">Active</mat-slide-toggle>
+            <mat-slide-toggle [checked]="form().ignoreSslErrors" (change)="updateForm({ ignoreSslErrors: $event.checked })">Ignore SSL errors</mat-slide-toggle>
           </div>
         </div>
       </mat-card-content>
@@ -46,11 +65,11 @@
     </mat-card>
   }
 
-  @if (loading) {
+  @if (loading()) {
     <div class="centered"><mat-spinner></mat-spinner></div>
   } @else {
     <div class="services-list">
-      @for (s of services; track s.id) {
+      @for (s of services(); track s.id) {
         <mat-card class="service-row">
           <div class="service-info">
             <div class="service-name">{{ s.name }}</div>

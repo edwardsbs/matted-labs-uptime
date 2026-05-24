@@ -1,20 +1,20 @@
 <div class="dashboard-container">
   <!-- Global banner -->
-  <div class="status-banner" [class.banner-up]="allUp" [class.banner-down]="!allUp && !loading">
-    @if (loading) {
+  <div class="status-banner" [class.banner-up]="allUp()" [class.banner-down]="!allUp() && !loading()">
+    @if (loading()) {
       <mat-spinner diameter="20"></mat-spinner>
       <span>Loading...</span>
-    } @else if (allUp) {
+    } @else if (allUp()) {
       <mat-icon>check_circle</mat-icon>
       <span>All systems operational</span>
     } @else {
       <mat-icon>error</mat-icon>
-      <span>{{ downCount }} service{{ downCount !== 1 ? 's' : '' }} down</span>
+      <span>{{ downCount() }} service{{ downCount() !== 1 ? 's' : '' }} down</span>
     }
   </div>
 
   <div class="grid">
-    @for (status of statuses; track status.service.id) {
+    @for (status of statuses(); track status.service.id) {
       <mat-card class="service-card" [class.card-down]="status.latestCheck && !status.latestCheck.isUp">
         <mat-card-header>
           <div class="card-title-row">

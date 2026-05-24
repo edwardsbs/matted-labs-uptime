@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { MonitoredService, ServiceStatus, UptimeCheck, CreateServiceRequest } from './models';
+import { MonitoredService, ServiceStatus, UptimeCheck, CreateServiceRequest, TestUrlResult } from './models';
 
 @Injectable({ providedIn: 'root' })
 export class UptimeService {
@@ -39,5 +39,9 @@ export class UptimeService {
 
   checkNow(serviceId: number): Observable<UptimeCheck> {
     return this.http.post<UptimeCheck>(`${this.base}/checks/${serviceId}/check-now`, {});
+  }
+
+  testUrl(url: string, ignoreSslErrors: boolean): Observable<TestUrlResult> {
+    return this.http.post<TestUrlResult>(`${this.base}/checks/test`, { url, ignoreSslErrors });
   }
 }

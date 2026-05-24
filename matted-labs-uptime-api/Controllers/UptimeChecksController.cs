@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using MattedLabsUptime.Api.Models;
 using MattedLabsUptime.Api.Repositories;
@@ -10,7 +11,8 @@ namespace MattedLabsUptime.Api.Controllers;
 public class UptimeChecksController(
     IUptimeCheckRepository checkRepo,
     IServiceRepository serviceRepo,
-    IUptimeCheckerService checker) : ControllerBase
+    IUptimeCheckerService checker,
+    IHttpClientFactory httpClientFactory) : ControllerBase
 {
     [HttpGet("{serviceId:int}")]
     public async Task<IActionResult> GetHistory(int serviceId, [FromQuery] int limit = 100)
@@ -40,7 +42,8 @@ public class UptimeChecksController(
         var services = await serviceRepo.GetAllAsync();
         var now = DateTime.UtcNow;
 
-        var results = await Task.WhenAll(services.Select(async s =>
+        var results = new List<ServiceStatusDto>();
+        foreach (var s in services)
         {
             var latest = await checkRepo.GetLatestForServiceAsync(s.Id);
             var recent = await checkRepo.GetSinceAsync(s.Id, now.AddHours(-24));
@@ -48,15 +51,15 @@ public class UptimeChecksController(
             var c30d = await checkRepo.GetSinceAsync(s.Id, now.AddDays(-30));
             var sparkline = await checkRepo.GetForServiceAsync(s.Id, 48);
 
-            return new ServiceStatusDto(
+            results.Add(new ServiceStatusDto(
                 Service: new(s.Id, s.Name, s.Url, s.IsActive, s.IgnoreSslErrors, s.IntervalMinutes, s.CreatedAt),
                 LatestCheck: latest is null ? null : ToDto(latest),
                 Uptime24h: CalcUptime(recent),
                 Uptime7d: CalcUptime(c7d),
                 Uptime30d: CalcUptime(c30d),
                 RecentChecks: sparkline.Select(ToDto)
-            );
-        }));
+            ));
+        }
 
         return Ok(results);
     }
@@ -69,6 +72,33 @@ public class UptimeChecksController(
         await checker.CheckServiceAsync(service);
         var latest = await checkRepo.GetLatestForServiceAsync(serviceId);
         return Ok(latest is null ? null : ToDto(latest));
+    }
+
+    [HttpPost("test")]
+    public async Task<IActionResult> TestUrl([FromBody] TestUrlRequest request)
+    {
+        var clientName = request.IgnoreSslErrors ? "IgnoreSsl" : "Default";
+        var client = httpClientFactory.CreateClient(clientName);
+        var sw = Stopwatch.StartNew();
+        bool isUp = false;
+        int? statusCode = null;
+        string? errorMessage = null;
+
+        try
+        {
+            var response = await client.GetAsync(request.Url);
+            sw.Stop();
+            statusCode = (int)response.StatusCode;
+            isUp = response.IsSuccessStatusCode;
+            if (!isUp) errorMessage = $"HTTP {statusCode}";
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            errorMessage = ex.Message.Length > 300 ? ex.Message[..300] : ex.Message;
+        }
+
+        return Ok(new TestUrlResult(isUp, sw.ElapsedMilliseconds, statusCode, errorMessage));
     }
 
     private static double CalcUptime(IEnumerable<UptimeCheck> checks)

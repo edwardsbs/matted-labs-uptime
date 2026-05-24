@@ -27,6 +27,13 @@ export interface ServiceStatus {
   recentChecks: UptimeCheck[];
 }
 
+export interface TestUrlResult {
+  isUp: boolean;
+  responseTimeMs: number;
+  statusCode: number | null;
+  errorMessage: string | null;
+}
+
 export interface CreateServiceRequest {
   name: string;
   url: string;

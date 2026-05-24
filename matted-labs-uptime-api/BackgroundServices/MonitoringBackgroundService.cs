@@ -20,37 +20,43 @@ public class MonitoringBackgroundService(
 
     private async Task RunChecksAsync(CancellationToken cancellationToken)
     {
-        using var scope = scopeFactory.CreateScope();
-        var serviceRepo = scope.ServiceProvider.GetRequiredService<IServiceRepository>();
-        var checker = scope.ServiceProvider.GetRequiredService<IUptimeCheckerService>();
-        var checkRepo = scope.ServiceProvider.GetRequiredService<IUptimeCheckRepository>();
+        // Load the service list in its own short-lived scope
+        IReadOnlyList<Api.Models.MonitoredService> services;
+        using (var listScope = scopeFactory.CreateScope())
+        {
+            var serviceRepo = listScope.ServiceProvider.GetRequiredService<IServiceRepository>();
+            services = (await serviceRepo.GetAllAsync()).Where(s => s.IsActive).ToList();
+        }
 
-        var services = await serviceRepo.GetAllAsync();
         var now = DateTime.UtcNow;
 
-        var tasks = services
-            .Where(s => s.IsActive)
-            .Select(async service =>
-            {
-                var latest = await checkRepo.GetLatestForServiceAsync(service.Id);
-                var nextCheck = latest?.CheckedAt.AddMinutes(service.IntervalMinutes) ?? DateTime.MinValue;
+        // Each service check gets its own scope so DbContext instances are never shared across threads
+        var tasks = services.Select(async service =>
+        {
+            using var scope = scopeFactory.CreateScope();
+            var checkRepo = scope.ServiceProvider.GetRequiredService<IUptimeCheckRepository>();
+            var checker = scope.ServiceProvider.GetRequiredService<IUptimeCheckerService>();
 
-                if (now >= nextCheck)
-                {
-                    try { await checker.CheckServiceAsync(service); }
-                    catch (Exception ex)
-                    {
-                        logger.LogError(ex, "Error checking service {Name}", service.Name);
-                    }
-                }
-            });
+            var latest = await checkRepo.GetLatestForServiceAsync(service.Id);
+            var nextCheck = latest?.CheckedAt.AddMinutes(service.IntervalMinutes) ?? DateTime.MinValue;
+
+            if (now < nextCheck) return;
+
+            try { await checker.CheckServiceAsync(service); }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error checking service {Name}", service.Name);
+            }
+        });
 
         await Task.WhenAll(tasks);
 
-        // Daily prune
+        // Prune in its own scope too
+        using var pruneScope = scopeFactory.CreateScope();
         try
         {
-            await checkRepo.PruneOldChecksAsync();
+            var pruneRepo = pruneScope.ServiceProvider.GetRequiredService<IUptimeCheckRepository>();
+            await pruneRepo.PruneOldChecksAsync();
         }
         catch (Exception ex)
         {

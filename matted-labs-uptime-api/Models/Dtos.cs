@@ -50,3 +50,7 @@ public record UptimeStatsDto(
     double Uptime7d,
     double Uptime30d
 );
+
+public record TestUrlRequest(string Url, bool IgnoreSslErrors);
+
+public record TestUrlResult(bool IsUp, long ResponseTimeMs, int? StatusCode, string? ErrorMessage);

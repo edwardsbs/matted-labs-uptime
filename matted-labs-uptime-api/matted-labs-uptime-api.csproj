@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>matted_labs_uptime_api</RootNamespace>
+    <UserSecretsId>06b36e9c-f3b9-4ffd-a39f-415e922fcef0</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
