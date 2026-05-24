@@ -48,15 +48,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() { this.sub?.unsubscribe(); }
 
+  openAdd() {
+    this.dialog.open(ServiceEditDialogComponent, {
+      data: null,
+      width: '560px',
+      panelClass: 'dark-dialog'
+    }).afterClosed().subscribe(saved => {
+      if (saved) this.refresh();
+    });
+  }
+
   openEdit(service: MonitoredService) {
-    const ref = this.dialog.open(ServiceEditDialogComponent, {
+    this.dialog.open(ServiceEditDialogComponent, {
       data: service,
       width: '560px',
       panelClass: 'dark-dialog'
+    }).afterClosed().subscribe(saved => {
+      if (saved) this.refresh();
     });
-    ref.afterClosed().subscribe(saved => {
-      if (saved) this.uptimeSvc.getDashboard().subscribe(data => this.statuses.set(data));
-    });
+  }
+
+  deleteService(service: MonitoredService) {
+    if (!confirm(`Delete "${service.name}" and all its history?`)) return;
+    this.uptimeSvc.deleteService(service.id).subscribe(() => this.refresh());
+  }
+
+  private refresh() {
+    this.uptimeSvc.getDashboard().subscribe(data => this.statuses.set(data));
   }
 
   sparkColor(c: UptimeCheck) { return c.isUp ? '#4caf50' : '#f44336'; }

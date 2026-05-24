@@ -1,16 +1,21 @@
 <div class="dashboard-container">
-  <!-- Global banner -->
-  <div class="status-banner" [class.banner-up]="allUp()" [class.banner-down]="!allUp() && !loading()">
-    @if (loading()) {
-      <mat-spinner diameter="20"></mat-spinner>
-      <span>Loading...</span>
-    } @else if (allUp()) {
-      <mat-icon>check_circle</mat-icon>
-      <span>All systems operational</span>
-    } @else {
-      <mat-icon>error</mat-icon>
-      <span>{{ downCount() }} service{{ downCount() !== 1 ? 's' : '' }} down</span>
-    }
+  <div class="top-bar">
+    <div class="status-banner" [class.banner-up]="allUp()" [class.banner-down]="!allUp() && !loading()">
+      @if (loading()) {
+        <mat-spinner diameter="20"></mat-spinner>
+        <span>Loading...</span>
+      } @else if (allUp()) {
+        <mat-icon>check_circle</mat-icon>
+        <span>All systems operational</span>
+      } @else {
+        <mat-icon>error</mat-icon>
+        <span>{{ downCount() }} service{{ downCount() !== 1 ? 's' : '' }} down</span>
+      }
+    </div>
+    <button mat-raised-button color="primary" (click)="openAdd()">
+      <mat-icon>add</mat-icon>
+      Add Service
+    </button>
   </div>
 
   <div class="grid">
@@ -42,7 +47,6 @@
             </div>
           }
 
-          <!-- Sparkline -->
           <div class="sparkline">
             @for (check of status.recentChecks.slice().reverse(); track check.id) {
               <div
@@ -72,6 +76,9 @@
         <mat-card-actions>
           <a mat-button [routerLink]="['/history', status.service.id]">History</a>
           <button mat-button (click)="openEdit(status.service)">Edit</button>
+          <button mat-icon-button color="warn" (click)="deleteService(status.service)" matTooltip="Delete service" class="delete-btn">
+            <mat-icon>delete</mat-icon>
+          </button>
         </mat-card-actions>
       </mat-card>
     }

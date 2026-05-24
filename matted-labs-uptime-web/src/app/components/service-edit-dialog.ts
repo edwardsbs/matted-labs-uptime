@@ -26,14 +26,16 @@ export class ServiceEditDialogComponent {
   private dialogRef = inject(MatDialogRef<ServiceEditDialogComponent>);
   private uptimeSvc = inject(UptimeService);
   private snack = inject(MatSnackBar);
-  readonly service = inject<MonitoredService>(MAT_DIALOG_DATA);
+  readonly service = inject<MonitoredService | null>(MAT_DIALOG_DATA);
+
+  isNew = this.service === null;
 
   form = signal<CreateServiceRequest>({
-    name: this.service.name,
-    url: this.service.url,
-    isActive: this.service.isActive,
-    ignoreSslErrors: this.service.ignoreSslErrors,
-    intervalMinutes: this.service.intervalMinutes
+    name: this.service?.name ?? '',
+    url: this.service?.url ?? '',
+    isActive: this.service?.isActive ?? true,
+    ignoreSslErrors: this.service?.ignoreSslErrors ?? false,
+    intervalMinutes: this.service?.intervalMinutes ?? 5
   });
   testResult = signal<TestUrlResult | null>(null);
   testing = signal(false);
@@ -58,7 +60,11 @@ export class ServiceEditDialogComponent {
 
   save() {
     this.saving.set(true);
-    this.uptimeSvc.updateService(this.service.id, this.form()).subscribe({
+    const req = this.isNew
+      ? this.uptimeSvc.createService(this.form())
+      : this.uptimeSvc.updateService(this.service!.id, this.form());
+
+    req.subscribe({
       next: () => this.dialogRef.close(true),
       error: () => { this.saving.set(false); this.snack.open('Error saving', '', { duration: 2000 }); }
     });
