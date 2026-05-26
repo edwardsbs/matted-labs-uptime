@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <radialGradient id="dotGrad" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#a5d6a7"/>
+      <stop offset="100%" stop-color="#388e3c"/>
+    </radialGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Dark background -->
+  <rect width="32" height="32" rx="7" fill="#1e1e2e"/>
+
+  <!-- Outer soft glow ring -->
+  <circle cx="16" cy="16" r="11" fill="rgba(76,175,80,0.18)"/>
+
+  <!-- Main dot with glow filter -->
+  <circle cx="16" cy="16" r="8" fill="url(#dotGrad)" filter="url(#glow)"/>
+</svg>
