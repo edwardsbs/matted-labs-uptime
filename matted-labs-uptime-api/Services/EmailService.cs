@@ -9,7 +9,7 @@ public interface IEmailService
 {
     Task SendDownAlertAsync(string serviceName, string url, string? error);
     Task SendRecoveryAlertAsync(string serviceName, string url, long responseTimeMs);
-    Task<bool> SendTestEmailAsync();
+    Task<(bool Sent, string? Error)> SendTestEmailAsync();
 }
 
 public class EmailService(ISettingsRepository settingsRepo, ILogger<EmailService> logger) : IEmailService
@@ -26,26 +26,26 @@ public class EmailService(ISettingsRepository settingsRepo, ILogger<EmailService
             body: $"Service has recovered.\n\nName: {serviceName}\nURL: {url}\nTime: {DateTime.UtcNow:u}\nResponse: {responseTimeMs}ms"
         );
 
-    public async Task<bool> SendTestEmailAsync() =>
+    public async Task<(bool Sent, string? Error)> SendTestEmailAsync() =>
         await SendAsync(
             subject: "[Matted Labs Uptime] Test email",
             body: $"Your alert configuration is working.\n\nSent at: {DateTime.UtcNow:u}"
         );
 
-    private async Task<bool> SendAsync(string subject, string body)
+    private async Task<(bool Sent, string? Error)> SendAsync(string subject, string body)
     {
         var s = await settingsRepo.GetAsync();
 
         if (!s.AlertsEnabled)
         {
             logger.LogInformation("Alerts disabled, skipping email: {Subject}", subject);
-            return false;
+            return (false, "Alerts are disabled");
         }
 
         if (string.IsNullOrWhiteSpace(s.SmtpHost))
         {
             logger.LogInformation("SMTP not configured, skipping email: {Subject}", subject);
-            return false;
+            return (false, "SMTP host is not configured");
         }
 
         try
@@ -57,19 +57,18 @@ public class EmailService(ISettingsRepository settingsRepo, ILogger<EmailService
             message.Body = new TextPart("plain") { Text = body };
 
             using var client = new SmtpClient();
-            await client.ConnectAsync(s.SmtpHost, s.SmtpPort,
-                s.SmtpEnableSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
+            await client.ConnectAsync(s.SmtpHost, s.SmtpPort, SecureSocketOptions.Auto);
             await client.AuthenticateAsync(s.SmtpUser, s.SmtpPassword);
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
 
             logger.LogInformation("Email sent: {Subject}", subject);
-            return true;
+            return (true, null);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Failed to send email: {Subject}", subject);
-            return false;
+            return (false, ex.Message);
         }
     }
 }

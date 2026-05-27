@@ -71,8 +71,8 @@ export class SettingsComponent implements OnInit {
     this.uptimeSvc.sendTestEmail().subscribe({
       next: r => {
         this.snack.open(
-          r.sent ? 'Test email sent — check your inbox' : 'Not sent — check SMTP configuration',
-          '', { duration: 4000 }
+          r.sent ? 'Test email sent — check your inbox' : `Not sent: ${r.error ?? 'Unknown error'}`,
+          '', { duration: 8000 }
         );
         this.sendingTest.set(false);
       },

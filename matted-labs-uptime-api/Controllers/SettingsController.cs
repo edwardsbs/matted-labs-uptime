@@ -37,8 +37,8 @@ public class SettingsController(ISettingsRepository settingsRepo, IEmailService 
     [HttpPost("test-email")]
     public async Task<IActionResult> TestEmail()
     {
-        var sent = await emailService.SendTestEmailAsync();
-        return Ok(new { sent });
+        var (sent, error) = await emailService.SendTestEmailAsync();
+        return Ok(new { sent, error });
     }
 
     private static AppSettingsDto ToDto(AppSettings s) => new(
