@@ -35,9 +35,23 @@ public class SettingsController(ISettingsRepository settingsRepo, IEmailService 
     }
 
     [HttpPost("test-email")]
-    public async Task<IActionResult> TestEmail()
+    public async Task<IActionResult> TestEmail([FromBody] UpdateSettingsRequest req)
     {
-        var (sent, error) = await emailService.SendTestEmailAsync();
+        // Use the live form values so the user can test before saving
+        var liveSettings = new AppSettings
+        {
+            SmtpHost       = req.SmtpHost,
+            SmtpPort       = req.SmtpPort,
+            SmtpUser       = req.SmtpUser,
+            SmtpPassword   = !string.IsNullOrEmpty(req.SmtpPassword)
+                                 ? req.SmtpPassword
+                                 : (await settingsRepo.GetAsync()).SmtpPassword,
+            SmtpFrom       = req.SmtpFrom,
+            AlertRecipient = req.AlertRecipient,
+            SmtpEnableSsl  = req.SmtpEnableSsl,
+            AlertsEnabled  = req.AlertsEnabled
+        };
+        var (sent, error) = await emailService.SendTestEmailAsync(liveSettings);
         return Ok(new { sent, error });
     }
 

@@ -1,6 +1,7 @@
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using MattedLabsUptime.Api.Models;
 using MattedLabsUptime.Api.Repositories;
 
 namespace MattedLabsUptime.Api.Services;
@@ -9,32 +10,35 @@ public interface IEmailService
 {
     Task SendDownAlertAsync(string serviceName, string url, string? error);
     Task SendRecoveryAlertAsync(string serviceName, string url, long responseTimeMs);
-    Task<(bool Sent, string? Error)> SendTestEmailAsync();
+    Task<(bool Sent, string? Error)> SendTestEmailAsync(AppSettings? overrideSettings = null);
 }
 
 public class EmailService(ISettingsRepository settingsRepo, ILogger<EmailService> logger) : IEmailService
 {
     public async Task SendDownAlertAsync(string serviceName, string url, string? error) =>
         await SendAsync(
+            settings: null,
             subject: $"[DOWN] {serviceName}",
             body: $"Service is DOWN.\n\nName: {serviceName}\nURL: {url}\nTime: {DateTime.UtcNow:u}\nError: {error ?? "Unknown"}"
         );
 
     public async Task SendRecoveryAlertAsync(string serviceName, string url, long responseTimeMs) =>
         await SendAsync(
+            settings: null,
             subject: $"[UP] {serviceName} recovered",
             body: $"Service has recovered.\n\nName: {serviceName}\nURL: {url}\nTime: {DateTime.UtcNow:u}\nResponse: {responseTimeMs}ms"
         );
 
-    public async Task<(bool Sent, string? Error)> SendTestEmailAsync() =>
+    public async Task<(bool Sent, string? Error)> SendTestEmailAsync(AppSettings? overrideSettings = null) =>
         await SendAsync(
+            settings: overrideSettings,
             subject: "[Matted Labs Uptime] Test email",
             body: $"Your alert configuration is working.\n\nSent at: {DateTime.UtcNow:u}"
         );
 
-    private async Task<(bool Sent, string? Error)> SendAsync(string subject, string body)
+    private async Task<(bool Sent, string? Error)> SendAsync(AppSettings? settings, string subject, string body)
     {
-        var s = await settingsRepo.GetAsync();
+        var s = settings ?? await settingsRepo.GetAsync();
 
         if (!s.AlertsEnabled)
         {

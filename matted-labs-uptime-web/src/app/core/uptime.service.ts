@@ -53,7 +53,7 @@ export class UptimeService {
     return this.http.put<AppSettings>(`${this.base}/settings`, settings);
   }
 
-  sendTestEmail(): Observable<{ sent: boolean; error: string | null }> {
-    return this.http.post<{ sent: boolean; error: string | null }>(`${this.base}/settings/test-email`, {});
+  sendTestEmail(settings: AppSettings): Observable<{ sent: boolean; error: string | null }> {
+    return this.http.post<{ sent: boolean; error: string | null }>(`${this.base}/settings/test-email`, settings);
   }
 }

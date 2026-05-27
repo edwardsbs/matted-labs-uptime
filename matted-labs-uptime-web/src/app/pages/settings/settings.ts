@@ -68,7 +68,7 @@ export class SettingsComponent implements OnInit {
 
   sendTestEmail() {
     this.sendingTest.set(true);
-    this.uptimeSvc.sendTestEmail().subscribe({
+    this.uptimeSvc.sendTestEmail(this.form()).subscribe({
       next: r => {
         this.snack.open(
           r.sent ? 'Test email sent — check your inbox' : `Not sent: ${r.error ?? 'Unknown error'}`,
