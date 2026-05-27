@@ -34,6 +34,17 @@ export interface TestUrlResult {
   errorMessage: string | null;
 }
 
+export interface AppSettings {
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPassword: string;
+  smtpFrom: string;
+  alertRecipient: string;
+  smtpEnableSsl: boolean;
+  alertsEnabled: boolean;
+}
+
 export interface CreateServiceRequest {
   name: string;
   url: string;

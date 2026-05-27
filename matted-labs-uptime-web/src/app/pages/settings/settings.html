@@ -4,92 +4,105 @@
       <mat-icon>arrow_back</mat-icon>
     </a>
     <h1>Settings</h1>
-    <button mat-raised-button color="primary" (click)="startAdd()" style="margin-left:auto">
-      <mat-icon>add</mat-icon>
-      Add Service
-    </button>
   </div>
-
-  @if (editingId() !== null) {
-    <mat-card class="edit-form">
-      <mat-card-header>
-        <mat-card-title>{{ editingId() === -1 ? 'Add Service' : 'Edit Service' }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <div class="form-grid">
-          <mat-form-field appearance="outline">
-            <mat-label>Name</mat-label>
-            <input matInput [value]="form().name" (input)="updateForm({ name: $any($event.target).value })" />
-          </mat-form-field>
-
-          <div class="url-row">
-            <mat-form-field appearance="outline" class="url-field">
-              <mat-label>URL</mat-label>
-              <input matInput [value]="form().url" (input)="updateForm({ url: $any($event.target).value })" />
-            </mat-form-field>
-            <button mat-stroked-button type="button" (click)="testUrl()" [disabled]="testing() || !form().url" class="test-btn">
-              @if (testing()) {
-                <mat-spinner diameter="18"></mat-spinner>
-              } @else {
-                <mat-icon>wifi_tethering</mat-icon>
-              }
-              Test
-            </button>
-          </div>
-
-          @if (testResult(); as r) {
-            <div class="test-result" [class.result-up]="r.isUp" [class.result-down]="!r.isUp">
-              <mat-icon>{{ r.isUp ? 'check_circle' : 'cancel' }}</mat-icon>
-              <span class="result-status">{{ r.isUp ? 'UP' : 'DOWN' }}</span>
-              <span class="result-time">{{ r.responseTimeMs }}ms</span>
-              @if (r.statusCode) { <span class="result-code">HTTP {{ r.statusCode }}</span> }
-              @if (r.errorMessage) { <span class="result-error">{{ r.errorMessage }}</span> }
-            </div>
-          }
-
-          <mat-form-field appearance="outline">
-            <mat-label>Check Interval (minutes)</mat-label>
-            <input matInput type="number" [value]="form().intervalMinutes" (input)="updateForm({ intervalMinutes: +$any($event.target).value })" min="1" />
-          </mat-form-field>
-
-          <div class="toggles">
-            <mat-slide-toggle [checked]="form().isActive" (change)="updateForm({ isActive: $event.checked })">Active</mat-slide-toggle>
-            <mat-slide-toggle [checked]="form().ignoreSslErrors" (change)="updateForm({ ignoreSslErrors: $event.checked })">Ignore SSL errors</mat-slide-toggle>
-          </div>
-        </div>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-raised-button color="primary" (click)="save()">Save</button>
-        <button mat-button (click)="cancel()">Cancel</button>
-      </mat-card-actions>
-    </mat-card>
-  }
 
   @if (loading()) {
     <div class="centered"><mat-spinner></mat-spinner></div>
   } @else {
-    <div class="services-list">
-      @for (s of services(); track s.id) {
-        <mat-card class="service-row">
-          <div class="service-info">
-            <div class="service-name">{{ s.name }}</div>
-            <div class="service-url">{{ s.url }}</div>
-            <div class="service-meta">
-              Every {{ s.intervalMinutes }}min
-              @if (!s.isActive) { <span class="inactive-badge">Inactive</span> }
-              @if (s.ignoreSslErrors) { <span class="ssl-badge">Ignore SSL</span> }
-            </div>
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon class="section-icon">email</mat-icon>
+          Email Alerts
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="alerts-toggle-row">
+          <mat-slide-toggle [checked]="form().alertsEnabled" (change)="update({ alertsEnabled: $event.checked })">
+            Enable email alerts
+          </mat-slide-toggle>
+          <span class="toggle-hint">Sends an email when a service goes down or recovers</span>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <div class="form-grid" [class.disabled]="!form().alertsEnabled">
+          <div class="row-2">
+            <mat-form-field appearance="outline">
+              <mat-label>SMTP Host</mat-label>
+              <input matInput [value]="form().smtpHost"
+                     (input)="update({ smtpHost: $any($event.target).value })"
+                     placeholder="smtp.gmail.com" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="port-field">
+              <mat-label>Port</mat-label>
+              <input matInput type="number"
+                     [value]="form().smtpPort"
+                     (input)="update({ smtpPort: +$any($event.target).value })" />
+            </mat-form-field>
           </div>
-          <div class="service-actions">
-            <button mat-icon-button (click)="startEdit(s)" matTooltip="Edit">
-              <mat-icon>edit</mat-icon>
-            </button>
-            <button mat-icon-button color="warn" (click)="delete(s.id)" matTooltip="Delete">
-              <mat-icon>delete</mat-icon>
-            </button>
+
+          <div class="row-2">
+            <mat-form-field appearance="outline">
+              <mat-label>Username</mat-label>
+              <input matInput [value]="form().smtpUser"
+                     (input)="update({ smtpUser: $any($event.target).value })"
+                     autocomplete="off" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Password</mat-label>
+              <input matInput [type]="showPassword() ? 'text' : 'password'"
+                     [value]="form().smtpPassword"
+                     (input)="update({ smtpPassword: $any($event.target).value })"
+                     autocomplete="new-password" />
+              <button mat-icon-button matSuffix (click)="showPassword.set(!showPassword())"
+                      [matTooltip]="showPassword() ? 'Hide password' : 'Show password'">
+                <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+              </button>
+            </mat-form-field>
           </div>
-        </mat-card>
-      }
-    </div>
+
+          <div class="row-2">
+            <mat-form-field appearance="outline">
+              <mat-label>From Address</mat-label>
+              <input matInput [value]="form().smtpFrom"
+                     (input)="update({ smtpFrom: $any($event.target).value })"
+                     placeholder="alerts@yourdomain.com" />
+            </mat-form-field>
+
+            <mat-form-field appearance="outline">
+              <mat-label>Alert Recipient</mat-label>
+              <input matInput [value]="form().alertRecipient"
+                     (input)="update({ alertRecipient: $any($event.target).value })"
+                     placeholder="you@yourdomain.com" />
+            </mat-form-field>
+          </div>
+
+          <div class="ssl-row">
+            <mat-slide-toggle [checked]="form().smtpEnableSsl" (change)="update({ smtpEnableSsl: $event.checked })">
+              Enable SSL / TLS
+            </mat-slide-toggle>
+          </div>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <button mat-stroked-button (click)="sendTestEmail()" [disabled]="sendingTest() || !form().smtpHost">
+          @if (sendingTest()) {
+            <mat-spinner diameter="18"></mat-spinner>
+          } @else {
+            <mat-icon>send</mat-icon>
+          }
+          Send Test Email
+        </button>
+        <button mat-raised-button color="primary" (click)="save()" [disabled]="saving()" style="margin-left: auto">
+          @if (saving()) { <mat-spinner diameter="18"></mat-spinner> }
+          Save
+        </button>
+      </mat-card-actions>
+    </mat-card>
   }
 </div>

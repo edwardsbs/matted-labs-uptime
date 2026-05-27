@@ -8,6 +8,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 {
     public DbSet<MonitoredService> MonitoredServices => Set<MonitoredService>();
     public DbSet<UptimeCheck> UptimeChecks => Set<UptimeCheck>();
+    public DbSet<AppSettings> AppSettings => Set<AppSettings>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -16,6 +17,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.HasKey(x => x.Id);
             e.Property(x => x.Name).HasMaxLength(200).IsRequired();
             e.Property(x => x.Url).HasMaxLength(2000).IsRequired();
+        });
+
+        modelBuilder.Entity<AppSettings>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.SmtpHost).HasMaxLength(500);
+            e.Property(x => x.SmtpUser).HasMaxLength(500);
+            e.Property(x => x.SmtpPassword).HasMaxLength(500);
+            e.Property(x => x.SmtpFrom).HasMaxLength(500);
+            e.Property(x => x.AlertRecipient).HasMaxLength(500);
         });
 
         modelBuilder.Entity<UptimeCheck>(e =>

@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -11,17 +10,19 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDividerModule } from '@angular/material/divider';
 import { UptimeService } from '../../core/uptime.service';
-import { MonitoredService, CreateServiceRequest, TestUrlResult } from '../../core/models';
+import { AppSettings } from '../../core/models';
 
 @Component({
   selector: 'app-settings',
   standalone: true,
   imports: [
-    CommonModule, RouterModule, FormsModule,
+    CommonModule, RouterModule,
     MatCardModule, MatFormFieldModule, MatInputModule,
     MatButtonModule, MatIconModule, MatSlideToggleModule,
-    MatProgressSpinnerModule, MatSnackBarModule, MatTooltipModule
+    MatProgressSpinnerModule, MatSnackBarModule, MatTooltipModule,
+    MatDividerModule
   ],
   templateUrl: './settings.html',
   styleUrl: './settings.scss'
@@ -30,77 +31,52 @@ export class SettingsComponent implements OnInit {
   private uptimeSvc = inject(UptimeService);
   private snack = inject(MatSnackBar);
 
-  services = signal<MonitoredService[]>([]);
   loading = signal(true);
-  editingId = signal<number | null>(null);
-  form = signal<CreateServiceRequest>(this.blank());
-  testResult = signal<TestUrlResult | null>(null);
-  testing = signal(false);
+  saving = signal(false);
+  sendingTest = signal(false);
+  showPassword = signal(false);
 
-  ngOnInit() { this.load(); }
+  form = signal<AppSettings>({
+    smtpHost: '',
+    smtpPort: 587,
+    smtpUser: '',
+    smtpPassword: '',
+    smtpFrom: '',
+    alertRecipient: '',
+    smtpEnableSsl: true,
+    alertsEnabled: true
+  });
 
-  load() {
-    this.loading.set(true);
-    this.uptimeSvc.getServices().subscribe({
-      next: s => { this.services.set(s); this.loading.set(false); },
-      error: () => this.loading.set(false)
+  ngOnInit() {
+    this.uptimeSvc.getSettings().subscribe({
+      next: s => { this.form.set(s); this.loading.set(false); },
+      error: () => { this.snack.open('Failed to load settings', '', { duration: 3000 }); this.loading.set(false); }
     });
   }
 
-  startEdit(s: MonitoredService) {
-    this.editingId.set(s.id);
-    this.form.set({ name: s.name, url: s.url, isActive: s.isActive, ignoreSslErrors: s.ignoreSslErrors, intervalMinutes: s.intervalMinutes });
+  update(patch: Partial<AppSettings>) {
+    this.form.update(f => ({ ...f, ...patch }));
   }
-
-  startAdd() {
-    this.editingId.set(-1);
-    this.form.set(this.blank());
-  }
-
-  cancel() { this.editingId.set(null); }
 
   save() {
-    const id = this.editingId();
-    if (id === -1) {
-      this.uptimeSvc.createService(this.form()).subscribe({
-        next: () => { this.snack.open('Service added', '', { duration: 2000 }); this.editingId.set(null); this.load(); },
-        error: () => this.snack.open('Error saving', '', { duration: 2000 })
-      });
-    } else if (id !== null) {
-      this.uptimeSvc.updateService(id, this.form()).subscribe({
-        next: () => { this.snack.open('Service updated', '', { duration: 2000 }); this.editingId.set(null); this.load(); },
-        error: () => this.snack.open('Error saving', '', { duration: 2000 })
-      });
-    }
-  }
-
-  delete(id: number) {
-    if (!confirm('Delete this service and all its history?')) return;
-    this.uptimeSvc.deleteService(id).subscribe({
-      next: () => { this.snack.open('Deleted', '', { duration: 2000 }); this.load(); },
-      error: () => this.snack.open('Error deleting', '', { duration: 2000 })
+    this.saving.set(true);
+    this.uptimeSvc.updateSettings(this.form()).subscribe({
+      next: () => { this.snack.open('Settings saved', '', { duration: 2000 }); this.saving.set(false); },
+      error: () => { this.snack.open('Error saving settings', '', { duration: 2000 }); this.saving.set(false); }
     });
   }
 
-  updateForm(patch: Partial<CreateServiceRequest>) {
-    this.form.update(f => ({ ...f, ...patch }));
-    if (patch.url !== undefined || patch.ignoreSslErrors !== undefined) {
-      this.testResult.set(null);
-    }
-  }
-
-  testUrl() {
-    const { url, ignoreSslErrors } = this.form();
-    if (!url) return;
-    this.testing.set(true);
-    this.testResult.set(null);
-    this.uptimeSvc.testUrl(url, ignoreSslErrors).subscribe({
-      next: r => { this.testResult.set(r); this.testing.set(false); },
-      error: () => { this.testing.set(false); this.snack.open('Test request failed', '', { duration: 2000 }); }
+  sendTestEmail() {
+    this.sendingTest.set(true);
+    this.uptimeSvc.sendTestEmail().subscribe({
+      next: r => {
+        this.snack.open(
+          r.sent ? 'Test email sent — check your inbox' : 'Not sent — check SMTP configuration',
+          '', { duration: 4000 }
+        );
+        this.sendingTest.set(false);
+      },
+      error: () => { this.snack.open('Error sending test email', '', { duration: 2000 }); this.sendingTest.set(false); }
     });
-  }
-
-  private blank(): CreateServiceRequest {
-    return { name: '', url: '', isActive: true, ignoreSslErrors: false, intervalMinutes: 5 };
   }
 }

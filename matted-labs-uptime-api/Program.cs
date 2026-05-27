@@ -12,8 +12,6 @@ builder.Services.AddControllers()
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-builder.Services.Configure<SmtpSettings>(builder.Configuration.GetSection("Smtp"));
-
 builder.Services.AddHttpClient("Default", c => c.Timeout = TimeSpan.FromSeconds(10));
 builder.Services.AddHttpClient("IgnoreSsl", c => c.Timeout = TimeSpan.FromSeconds(10))
     .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
@@ -23,6 +21,7 @@ builder.Services.AddHttpClient("IgnoreSsl", c => c.Timeout = TimeSpan.FromSecond
 
 builder.Services.AddScoped<IServiceRepository, ServiceRepository>();
 builder.Services.AddScoped<IUptimeCheckRepository, UptimeCheckRepository>();
+builder.Services.AddScoped<ISettingsRepository, SettingsRepository>();
 builder.Services.AddScoped<IUptimeCheckerService, UptimeCheckerService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddHostedService<MonitoringBackgroundService>();
@@ -34,8 +33,9 @@ var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DbSeeder.SeedAsync(db);
+    var db     = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var config = scope.ServiceProvider.GetRequiredService<IConfiguration>();
+    await DbSeeder.SeedAsync(db, config);
 }
 
 app.UseCors();
