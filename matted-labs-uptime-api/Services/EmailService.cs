@@ -1,5 +1,6 @@
-using System.Net;
-using System.Net.Mail;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 using MattedLabsUptime.Api.Repositories;
 
 namespace MattedLabsUptime.Api.Services;
@@ -49,13 +50,19 @@ public class EmailService(ISettingsRepository settingsRepo, ILogger<EmailService
 
         try
         {
-            using var client = new SmtpClient(s.SmtpHost, s.SmtpPort)
-            {
-                Credentials = new NetworkCredential(s.SmtpUser, s.SmtpPassword),
-                EnableSsl = s.SmtpEnableSsl
-            };
-            using var message = new MailMessage(s.SmtpFrom, s.AlertRecipient, subject, body);
-            await client.SendMailAsync(message);
+            var message = new MimeMessage();
+            message.From.Add(MailboxAddress.Parse(s.SmtpFrom));
+            message.To.Add(MailboxAddress.Parse(s.AlertRecipient));
+            message.Subject = subject;
+            message.Body = new TextPart("plain") { Text = body };
+
+            using var client = new SmtpClient();
+            await client.ConnectAsync(s.SmtpHost, s.SmtpPort,
+                s.SmtpEnableSsl ? SecureSocketOptions.StartTls : SecureSocketOptions.None);
+            await client.AuthenticateAsync(s.SmtpUser, s.SmtpPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
             logger.LogInformation("Email sent: {Subject}", subject);
             return true;
         }
